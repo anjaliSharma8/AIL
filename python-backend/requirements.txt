@@ -4,3 +4,4 @@ uvicorn[standard]
 python-dotenv
 google-genai
 huggingface_hub
+python-multipart
