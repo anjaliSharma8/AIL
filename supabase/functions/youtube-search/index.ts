@@ -210,27 +210,63 @@ interface CaptionTrack {
   kind?: string;
 }
 
+
 async function getCaptionTracks(videoId: string): Promise<CaptionTrack[]> {
-  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  const res = await fetch(watchUrl, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-      "Accept-Language": "en-US,en;q=0.9",
-    },
-  });
-
-  if (!res.ok) return [];
-
-  const html = await res.text();
-  const captionTracksMatch = html.match(/"captionTracks":(\[.*?\])/);
-  if (!captionTracksMatch) return [];
-
   try {
-    return JSON.parse(captionTracksMatch[1]) as CaptionTrack[];
-  } catch {
+    const watchUrl = `https://www.youtube.com/watch?v=${encodeURIComponent(videoId)}`;
+
+    const res = await fetch(watchUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+    });
+
+    if (!res.ok) {
+      console.error("YouTube watch page failed:", res.status);
+      return [];
+    }
+
+    const html = await res.text();
+
+    const patterns = [
+      /"captionTracks"\s*:\s*(\[[\s\S]*?\])\s*,\s*"audioTracks"/,
+      /"captionTracks"\s*:\s*(\[[\s\S]*?\])/,
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (!match) continue;
+
+      try {
+        const tracks = JSON.parse(match[1]) as CaptionTrack[];
+
+        const validTracks = tracks.filter(
+          (track) =>
+            typeof track.baseUrl === "string" &&
+            typeof track.languageCode === "string"
+        );
+
+        if (validTracks.length > 0) {
+          console.log(
+            `Found ${validTracks.length} caption tracks for video ${videoId}`
+          );
+          return validTracks;
+        }
+      } catch {
+        // Try the next pattern.
+      }
+    }
+
+    console.log(`No caption tracks extracted for video ${videoId}`);
+    return [];
+  } catch (error) {
+    console.error("Caption extraction failed:", error);
     return [];
   }
 }
+
 
 function parseTimedTextXml(xml: string): TranscriptSegment[] {
   const segments: TranscriptSegment[] = [];

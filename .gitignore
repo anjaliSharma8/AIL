@@ -21,3 +21,17 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Python virtual environment
+.venv/
+Lib/
+Scripts/
+__pycache__/
+*.pyc
+
+# Local secrets
+.env
+.env.*
+
+# Supabase local temporary files
+supabase/.temp/
