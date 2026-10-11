@@ -71,7 +71,7 @@ function App() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/api/summarize-url",
+      "https://ail-ly6h.onrender.com/api/summarize-url",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
